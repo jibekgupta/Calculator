@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f1f1f1;
+        }
+        .calculator {
+            background-color: rgb(22, 63, 68);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 395px;  /* Updated width for better spacing */
+            height: 400px; /* Added height for better layout */
+        }
+        .display {
+            width: 95%;
+            height: 50px;
+            text-align: right;
+            margin-bottom: 20px;
+            font-size: 30px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #ccc;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            grid-auto-rows: minmax(65px, 1fr);
+        }
+        .button {
+            padding: 0;
+            font-size: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #f1f1f1;
+        }
+        .button:active {
+            background-color: #ddd;
+        }
+        /* Style for the 'C' button (clear screen) */
+        .button-clear {
+            background-color: #ad4509;
+        }
+        .button-clear:hover {
+            background-color: #f5c6cb;
+        }
+        .button-equal {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator">
+    <form id="calculator-form" method="POST">
+        {% csrf_token %}
+        <input type="text" id="display" name="expression" class="display" value="{{ result }}" readonly>
+
+        <div class="buttons">
+            <!-- First Row -->
+            <button type="button" class="button" onclick="appendToDisplay('7')">7</button>
+            <button type="button" class="button" onclick="appendToDisplay('8')">8</button>
+            <button type="button" class="button" onclick="appendToDisplay('9')">9</button>
+            <button type="button" class="button button-clear" onclick="deleteLast()">DEL</button>
+            <button type="button" class="button button-clear" onclick="clearDisplay()">C</button>
+
+            <!-- Second Row -->
+            <button type="button" class="button" onclick="appendToDisplay('4')">4</button>
+            <button type="button" class="button" onclick="appendToDisplay('5')">5</button>
+            <button type="button" class="button" onclick="appendToDisplay('6')">6</button>
+            <button type="button" class="button" onclick="appendToDisplay('*')">*</button>
+            <button type="button" class="button" onclick="appendToDisplay('/')">/</button>
+
+            <!-- Third Row -->
+            <button type="button" class="button" onclick="appendToDisplay('1')">1</button>
+            <button type="button" class="button" onclick="appendToDisplay('2')">2</button>
+            <button type="button" class="button" onclick="appendToDisplay('3')">3</button>
+            <button type="button" class="button" onclick="appendToDisplay('+')">+</button>
+            <button type="button" class="button" onclick="appendToDisplay('-')">-</button>
+
+            <!-- Fourth Row -->
+            <button type="button" class="button" onclick="appendToDisplay('0')">0</button>
+            <button type="button" class="button" onclick="appendToDisplay('.')">.</button>
+            <button type="button" class="button" onclick="appendToDisplay('x10^x')">x10^x</button>
+            <button type="button" class="button button-equal" onclick="calculate()">=</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function appendToDisplay(value) {
+        const display = document.getElementById("display");
+        display.value += value;
+    }
+
+    function clearDisplay() {
+        const display = document.getElementById("display");
+        display.value = '';  // Clear the display
+    }
+
+    function deleteLast() {
+        const display = document.getElementById("display");
+        display.value = display.value.slice(0, -1);  // Delete the last character
+    }
+
+    function calculate() {
+        const display = document.getElementById("display");
+        let expression = display.value;
+
+        // Handle 'x10^x' as an exponentiation (e.g., 2x10^3 becomes 2 * 10^3)
+        expression = expression.replace(/x10\^x/g, '*10**');
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: new URLSearchParams({
+                'expression': expression,
+                'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }),
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            }
+        })
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById("display").value = data;
+        })
+        .catch(error => {
+            console.error("Error:", error);
+        });
+    }
+</script>
+
+</body>
+</html>
